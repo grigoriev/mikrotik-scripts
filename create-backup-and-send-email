@@ -1,0 +1,36 @@
+:log info "STARTING BACKUP";
+
+:local filename;
+
+:local date [/system clock get date];
+:local time [/system clock get time];
+:local name [/system identity get name];
+
+:local months ("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec")
+:local month ([:find $months [:pick $date 0 3]] + 1)
+:if ($month < 10) do={:set month ("0".$month);}
+:local day [:pick $date 4 6];
+:local year [:pick $date 7 11];
+
+:local HH [:pick $time 0 2];
+:local MM [:pick $time 3 5];
+:local SS [:pick $time 6 8];
+
+:local currentdate ($year."-".$month."-".$day);
+:local timestamp ($currentdate."-".$HH.$MM.$SS);
+:set filename ($name."-".$timestamp);
+
+/system backup save name=$filename;
+
+:delay 3s;
+
+/export file=$filename;
+
+:log info "BACKUP FINISHED";
+
+:log info "SENDING BACKUP VIA EMAIL";
+
+:local attachments [:file find where name~$filename];
+/tool e-mail send to="admin@intechcore.com" subject="router daily config backup $currentdate" body="router configuration files backup $currentdate" file=$attachments
+
+:log info "BACKUP WAS SENT";
